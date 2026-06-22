@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Life Checker — demo</title>
+  <style>
+    :root {
+      --life-color-bg-fill-primary: #2E7FA1;
+      --life-color-text-default: #1a1a1a;
+      --life-color-border-subtle: #e5e7eb;
+    }
+    body { font-family: Lato, system-ui, sans-serif; margin: 0; padding: 48px; color: #1a1a1a; background: #fafafa; }
+    h1 { font-weight: 300; font-size: 32px; }
+    .card { background: #fff; border: 1px solid var(--life-color-border-subtle); border-radius: 12px; padding: 24px; max-width: 520px; margin-top: 24px; }
+    .token-btn { background: var(--life-color-bg-fill-primary); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+    /* fake "styled-components" element to demo component detection */
+    .sc-demo { display: inline-block; margin-top: 16px; padding: 8px 14px; border-radius: 8px; background: #eef; font-size: 13px; }
+    p { color: var(--life-color-text-default); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <h1>Life Checker demo</h1>
+  <p>This page mixes <strong>design-token usage</strong> (inline <code>var(--life-*)</code> styles)
+     and a fake <strong>component</strong> element (<code>class="sc-demo"</code>).</p>
+  <div class="card">
+    <p style="color: var(--life-color-text-default)">Card using a Life border + text token.</p>
+    <button class="token-btn">Primary (uses --life-color-bg-fill-primary)</button>
+    <div class="sc-demo">Pretend Life component (sc-…)</div>
+  </div>
+  <p style="margin-top:32px;color:#6b7280;font-size:13px">
+    Click the “Built on Life” badge (bottom-left) → flip the highlight toggle.
+    Components get a solid blue box, design tokens a purple dashed box.
+  </p>
+
+  <!-- Optional project-specific config -->
+  <script>
+    window.LifeCheckerConfig = {
+      implemented: [
+        { group: 'Foundation', items: [
+          { name: 'Design tokens', detail: 'var(--life-color-*) used for surfaces, text, borders', status: 'done' },
+        ] },
+      ],
+      missing: [
+        { area: 'Buttons', current: 'Hand-rolled <button>', suggest: 'Button' },
+      ],
+      components: [ { name: 'Button', used: false } ],
+    }
+  </script>
+  <script src="../src/life-checker.js"></script>
+</body>
+</html>

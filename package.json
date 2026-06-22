@@ -1,0 +1,21 @@
+{
+  "name": "life-checker",
+  "version": "0.1.0",
+  "description": "Drop-in prototype plugin for the Laerdal Life design system — highlights live Life components and design tokens in any running UI, with a reference checker.",
+  "main": "src/life-checker.js",
+  "files": [
+    "src/life-checker.js"
+  ],
+  "scripts": {
+    "demo": "python3 -m http.server 4178"
+  },
+  "keywords": [
+    "laerdal",
+    "life",
+    "design-system",
+    "prototype",
+    "plugin",
+    "checker"
+  ],
+  "license": "MIT"
+}
