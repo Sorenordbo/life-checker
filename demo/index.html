@@ -23,17 +23,20 @@
   <h1>Life Checker demo</h1>
   <p>This page mixes <strong>design-token usage</strong> (inline <code>var(--life-*)</code> styles)
      and a fake <strong>component</strong> element (<code>class="sc-demo"</code>).</p>
-  <div class="card">
+  <!-- Real Life components carry data-slot="…" — the checker auto-detects these as in-use. -->
+  <div class="card" data-slot="card">
     <p style="color: var(--life-color-text-default)">Card using a Life border + text token.</p>
-    <button class="token-btn">Primary (uses --life-color-bg-fill-primary)</button>
-    <div class="sc-demo">Pretend Life component (sc-…)</div>
+    <button class="token-btn" data-slot="button">Primary (uses --life-color-bg-fill-primary)</button>
+    <span class="sc-demo" data-slot="tag">Tag (data-slot="tag")</span>
   </div>
   <p style="margin-top:32px;color:#6b7280;font-size:13px">
-    Click the “Built on Life” badge (bottom-left) → flip the highlight toggle.
-    Components get a solid blue box, design tokens a purple dashed box.
+    Click the “Build with Life” badge (bottom-left) → flip the highlight toggle.
+    Components get a solid blue box, design tokens a purple dashed box. The
+    <strong>All components</strong> tab auto-checks Card, Button, and Tag from the data-slots above.
   </p>
 
-  <!-- Optional project-specific config -->
+  <!-- Optional project-specific config. Note: no 'components' flags needed —
+       the live scan marks Card/Button/Tag in-use on its own. -->
   <script>
     window.LifeCheckerConfig = {
       implemented: [
@@ -44,7 +47,6 @@
       missing: [
         { area: 'Buttons', current: 'Hand-rolled <button>', suggest: 'Button' },
       ],
-      components: [ { name: 'Button', used: false } ],
     }
   </script>
   <script src="../src/life-checker.js"></script>

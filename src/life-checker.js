@@ -37,10 +37,21 @@
     'Switcher', 'Table', 'Tabs', 'Tag', 'Tile', 'Toasters', 'Toggles', 'Tooltips',
   ]
 
+  // Maps a Life component's data-slot name (the v1.4+ Tailwind library tags every
+  // element it renders with data-slot="button", "card", …) to its catalogue entry.
+  // We key on the FIRST segment of the slot, so sub-parts like "card-header" or
+  // "dropdown-trigger" still count toward their parent component.
+  var SLOT_ALIASES = {
+    banner: 'Banners', progress: 'LinearProgress', segmented: 'SegmentControl',
+    tooltip: 'Tooltips', toggle: 'Toggles', modal: 'Modals', dialog: 'Modals',
+    input: 'InputFields', chip: 'Chips', loader: 'LoadingIndicator',
+    hyperlink: 'HyperLink', toast: 'Toasters',
+  }
+
   // Detection selectors. Defaults cover both styled-components-based Life usage
   // (class "sc-…") and Tailwind-class Life-token usage (bg-fill-*, etc.).
   var DEFAULTS = {
-    badgeText: 'Built on Life',
+    badgeText: 'Build with Life',
     title: 'Life checker',
     subtitle: 'How much of the Laerdal Life design system this prototype uses',
     docsUrl: 'https://life.laerdal.com/',
@@ -55,8 +66,14 @@
   }
 
   var cfg = Object.assign({}, DEFAULTS, window.LifeCheckerConfig || {})
-  var state = { open: false, tab: null, highlight: false }
+  var state = { open: false, tab: null, highlight: false, detected: {} }
   var els = {} // cached DOM refs
+
+  // Normalised lookup of catalogue names, so a detected slot can match an entry
+  // regardless of plural/casing/parenthetical (e.g. "Icons (SystemIcons)" -> "icons").
+  var CAT_LOOKUP = {}
+  function norm(s) { return String(s).toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z]/g, '') }
+  DEFAULT_COMPONENTS.forEach(function (n) { CAT_LOOKUP[norm(n)] = n })
 
   // ---------------------------------------------------------------- helpers
   function h(tag, attrs, children) {
@@ -213,10 +230,32 @@
     }
     return wrap
   }
+  // Scan the LIVE UI for Life components already on screen and mark their catalogue
+  // entries as in-use. This is what makes pre-existing Life work count as compliant
+  // with zero configuration — whether it was built before or after the checker was
+  // added. Runs on mount and on every open, so it tracks SPA route changes too.
+  function detectUsedComponents() {
+    var found = {}
+    var nodes = document.querySelectorAll('[data-slot]')
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i]
+      if (el.hasAttribute('data-life-checker') || el.closest('[data-life-checker]')) continue
+      var base = (el.getAttribute('data-slot') || '').split('-')[0]
+      if (!base) continue
+      var name = SLOT_ALIASES[base] || CAT_LOOKUP[norm(base)] || CAT_LOOKUP[norm(base + 's')]
+      if (name) found[name] = true
+    }
+    state.detected = found
+    return found
+  }
   function catalogue() {
+    detectUsedComponents()
+    // A component counts as used if it's auto-detected on screen OR flagged in config.
     var override = {}
     ;(cfg.components || []).forEach(function (c) { override[c.name] = !!c.used })
-    return DEFAULT_COMPONENTS.map(function (name) { return { name: name, used: !!override[name] } })
+    return DEFAULT_COMPONENTS.map(function (name) {
+      return { name: name, used: !!(state.detected[name] || override[name]) }
+    })
   }
   function progress(n, total, label) {
     var children = [

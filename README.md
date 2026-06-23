@@ -3,18 +3,29 @@
 A tiny, **zero-dependency** drop-in plugin for prototypes built on (or migrating to)
 the Laerdal **Life** design system.
 
-It pins a subtle **“Built on Life”** badge in the corner of any prototype. Click it to:
+It pins a subtle **“Build with Life”** badge in the corner of any prototype. Click it to:
 
 - **Highlight Life usage live in the running UI** — toggle on to outline every
   **Life component** (solid blue box) and every **design-token** usage (purple dashed box).
   The toggle persists while you keep working, even after the panel is closed.
-- **See coverage** — reference tabs for what’s implemented, what’s still missing
-  (with the Life component to migrate to), and the full Life component catalogue.
+- **See coverage** — the **All components** tab auto-detects which Life components are on
+  screen and checks them off, so work you did with Life *before* installing the checker still
+  counts as compliant. Optional tabs show what’s implemented and what’s still missing.
 
 It works in **any** prototype — React, Vue, or plain HTML — because it’s a classic
 self-mounting script, not a framework component.
 
-## Use it
+## Install it — just ask Claude Code
+
+This is the easy path for designers. In your prototype, ask Claude Code:
+
+> Install the Life Checker from https://github.com/Sorenordbo/life-checker
+
+Claude follows the bundled [`SKILL.md`](./SKILL.md): it installs the Life component library and
+design tokens (so you’re ready to vibe code with Life), then drops in the **Build with Life**
+badge — framework and all. No manual wiring.
+
+## Or add it by hand
 
 Add one line to your prototype:
 
@@ -22,14 +33,14 @@ Add one line to your prototype:
 <script src="life-checker.js"></script>
 ```
 
-That’s it — the badge self-mounts. The highlight feature and the universal
+That’s it — the badge self-mounts. The highlight feature and the auto-detected
 component catalogue work with no configuration.
 
 ### Optional configuration
 
-Supply project-specific data for the “Implemented” and “Missing Life” tabs, and
-mark which catalogue components you’re using. Either set a global **before** the
-script, or call the API any time after.
+The **All components** tab fills itself by scanning the live UI — no config needed.
+Supply data only to add the curated “Implemented” and “Missing Life” tabs. Either set
+a global **before** the script, or call the API any time after.
 
 ```html
 <script>
@@ -42,7 +53,9 @@ script, or call the API any time after.
     missing: [
       { area: 'Buttons', current: 'Hand-rolled <button>', suggest: 'Button' },
     ],
-    components: [ { name: 'Button', used: true } ], // marks catalogue entries in-use
+    // Optional — the live scan already marks on-screen usage. Use this only to assert
+    // usage the scan can't see (e.g. a Life component on a route you haven't visited).
+    components: [ { name: 'Button', used: true } ],
   }
 </script>
 <script src="life-checker.js"></script>
