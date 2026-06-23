@@ -58,8 +58,10 @@
     highlightDefault: false,
     componentSelector: '[class*="sc-"], [data-slot]',
     tokenSelector: '[style*="--life-"], [class*="bg-fill-"], [class*="bg-surface-"], [class*="text-default"], [class*="text-subtle"], [class*="border-default"], [class*="border-subtle"]',
-    componentColor: '#0891B2',
-    tokenColor: '#AF50AF',
+    // Life tokens (with standalone fallbacks). Components highlight in Life primary;
+    // tokens in accent2 — deliberately NOT Samaritan purple, which Life reserves for AI.
+    componentColor: 'var(--life-color-primary-500, #2e7fa1)',
+    tokenColor: 'var(--life-color-accent2-500, #92702f)',
     implemented: null, // [{group, items:[{name, detail, status:'done'|'partial'|'todo'}]}]
     missing: null,     // [{area, current, suggest}]
     components: null,  // [{name, used}] — overrides used-flags on the catalogue
@@ -91,10 +93,12 @@
     })
     return el
   }
+  // Stroke colours come from Life tokens. SVG presentation attributes don't accept
+  // var(), so the token goes through the `style` attribute (which does).
   var SVG = {
-    close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#cbd2de" stroke-width="2" stroke-linecap="round"/></svg>',
-    check: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3EC2A6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    ext: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:middle"><path d="M14 5h5v5M19 5l-8 8M10 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4" stroke="#9aa3b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" style="stroke:var(--life-color-neutral-200,#cccccc)" stroke-width="2" stroke-linecap="round"/></svg>',
+    check: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" style="stroke:var(--life-color-positive-400,#37a851)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    ext: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:middle"><path d="M14 5h5v5M19 5l-8 8M10 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4" style="stroke:var(--life-color-neutral-400,#949494)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   }
 
   // ---------------------------------------------------------------- highlight
@@ -124,53 +128,70 @@
   // ---------------------------------------------------------------- styles
   function injectStyles() {
     if (document.getElementById('__life-checker-styles__')) return
+    // Every colour below is a Life design token (var(--life-color-*)) with a hex
+    // fallback, so the checker dogfoods Life when the host app has Life CSS loaded
+    // and still renders standalone in any prototype. Surfaces use the Life primary
+    // dark scale; greys use the Life neutral scale; whites use base-white.
+    var T = {
+      surface: 'var(--life-color-primary-850, #0f2934)',
+      surfaceRaised: 'var(--life-color-primary-800, #163746)',
+      scrim: 'var(--life-color-alpha-black-50, rgba(26,26,26,.5))',
+      scrimSoft: 'var(--life-color-alpha-black-25, rgba(26,26,26,.3))',
+      hairline: 'var(--life-color-alpha-white-25, rgba(255,255,255,.2))',
+      white: 'var(--life-color-base-white, #ffffff)',
+      text: 'var(--life-color-neutral-100, #e5e5e5)',
+      textSubtle: 'var(--life-color-neutral-300, #ababab)',
+      textFaint: 'var(--life-color-neutral-400, #949494)',
+      link: 'var(--life-color-neutral-200, #cccccc)',
+      primary: 'var(--life-color-primary-500, #2e7fa1)',
+    }
     var css = [
-      '.lc-badge{position:fixed;left:24px;bottom:24px;z-index:9000;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:rgba(26,32,44,0.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:10px;font-weight:500;font-family:Lato,system-ui,sans-serif;letter-spacing:0.02em;cursor:pointer;opacity:0.45;transition:opacity .15s,background .15s}',
-      '.lc-badge:hover{opacity:1;background:rgba(26,32,44,0.85)}',
-      '.lc-backdrop{position:fixed;inset:0;background:rgba(10,14,22,0.5);display:flex;align-items:flex-end;justify-content:flex-start;padding:16px;z-index:9001}',
-      '.lc-panel{width:100%;max-width:440px;max-height:82vh;display:flex;flex-direction:column;background:#1A2332;color:#e8ebf0;border-radius:16px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 70px rgba(0,0,0,0.45);overflow:hidden;font-family:Lato,system-ui,sans-serif}',
-      '.lc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}',
-      '.lc-title{font-size:16px;font-weight:700;color:#fff;line-height:1.2}',
-      '.lc-sub{font-size:12px;color:#9aa3b2;margin-top:3px;line-height:1.4}',
+      '.lc-badge{position:fixed;left:24px;bottom:24px;z-index:9000;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:' + T.scrim + ';-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1px solid ' + T.hairline + ';color:' + T.white + ';font-size:10px;font-weight:500;font-family:Lato,system-ui,sans-serif;letter-spacing:0.02em;cursor:pointer;opacity:0.45;transition:opacity .15s,background .15s}',
+      '.lc-badge:hover{opacity:1;background:var(--life-color-alpha-black-75, rgba(26,26,26,.8))}',
+      '.lc-backdrop{position:fixed;inset:0;background:' + T.scrim + ';display:flex;align-items:flex-end;justify-content:flex-start;padding:16px;z-index:9001}',
+      '.lc-panel{width:100%;max-width:440px;max-height:82vh;display:flex;flex-direction:column;background:' + T.surface + ';color:' + T.text + ';border-radius:16px;border:1px solid ' + T.hairline + ';box-shadow:0 24px 70px ' + T.scrim + ';overflow:hidden;font-family:Lato,system-ui,sans-serif}',
+      '.lc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 20px 16px;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-title{font-size:16px;font-weight:700;color:' + T.white + ';line-height:1.2}',
+      '.lc-sub{font-size:12px;color:' + T.textSubtle + ';margin-top:3px;line-height:1.4}',
       '.lc-x{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:8px;cursor:pointer}',
-      '.lc-x:hover{background:rgba(255,255,255,0.08)}',
-      '.lc-hl{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}',
-      '.lc-switch{flex-shrink:0;width:38px;height:22px;border-radius:99px;border:none;padding:2px;cursor:pointer;background:rgba(255,255,255,0.18);transition:background .15s;display:flex;align-items:center}',
-      '.lc-switch.lc-on{background:#3EC2A6}',
-      '.lc-knob{width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s;transform:translateX(0)}',
+      '.lc-x:hover{background:' + T.hairline + '}',
+      '.lc-hl{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-switch{flex-shrink:0;width:38px;height:22px;border-radius:99px;border:none;padding:2px;cursor:pointer;background:' + T.hairline + ';transition:background .15s;display:flex;align-items:center}',
+      '.lc-switch.lc-on{background:' + T.primary + '}',
+      '.lc-knob{width:18px;height:18px;border-radius:50%;background:' + T.white + ';transition:transform .15s;transform:translateX(0)}',
       '.lc-switch.lc-on .lc-knob{transform:translateX(16px)}',
-      '.lc-hl-label{font-size:13px;font-weight:600;color:#e8ebf0}',
+      '.lc-hl-label{font-size:13px;font-weight:600;color:' + T.text + '}',
       '.lc-legend{display:flex;gap:14px;margin-top:4px}',
-      '.lc-leg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#9aa3b2}',
+      '.lc-leg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:' + T.textSubtle + '}',
       '.lc-sw-c{width:14px;height:10px;border-radius:2px;border:2px solid ' + cfg.componentColor + '}',
       '.lc-sw-t{width:14px;height:10px;border-radius:2px;border:2px dashed ' + cfg.tokenColor + '}',
-      '.lc-tabs{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}',
-      '.lc-tab{flex:1;padding:8px 12px;border:none;border-radius:8px;background:transparent;color:#9aa3b2;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .12s,color .12s}',
-      '.lc-tab.lc-active{background:rgba(255,255,255,0.08);color:#fff}',
-      '.lc-prog{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}',
-      '.lc-count{font-size:18px;font-weight:800;color:#fff}',
-      '.lc-plabel{font-size:12px;color:#9aa3b2}',
-      '.lc-track{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,0.1);overflow:hidden}',
-      '.lc-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3EC2A6,#2E7FA1)}',
+      '.lc-tabs{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-tab{flex:1;padding:8px 12px;border:none;border-radius:8px;background:transparent;color:' + T.textSubtle + ';font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .12s,color .12s}',
+      '.lc-tab.lc-active{background:' + T.hairline + ';color:' + T.white + '}',
+      '.lc-prog{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-count{font-size:18px;font-weight:800;color:' + T.white + '}',
+      '.lc-plabel{font-size:12px;color:' + T.textSubtle + '}',
+      '.lc-track{flex:1;height:6px;border-radius:99px;background:' + T.hairline + ';overflow:hidden}',
+      '.lc-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--life-color-positive-400,#37a851),' + T.primary + ')}',
       '.lc-body{overflow-y:auto;padding:6px 20px 16px}',
       '.lc-sec{margin-top:16px}',
-      '.lc-sectitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6f7889;margin-bottom:8px}',
-      '.lc-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}',
+      '.lc-sectitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:8px}',
+      '.lc-item{padding:8px 0;border-bottom:1px solid ' + T.hairline + '}',
       '.lc-item-main{display:flex;align-items:center;justify-content:space-between;gap:10px}',
-      '.lc-item-name{font-size:13.5px;font-weight:600;color:#e8ebf0}',
-      '.lc-item-detail{font-size:12px;color:#8a93a6;line-height:1.45;margin-top:3px}',
+      '.lc-item-name{font-size:13.5px;font-weight:600;color:' + T.text + '}',
+      '.lc-item-detail{font-size:12px;color:' + T.textSubtle + ';line-height:1.45;margin-top:3px}',
       '.lc-tag{flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em}',
-      '.lc-tag-done{color:#3EC2A6;background:rgba(62,194,166,0.14);display:inline-flex;align-items:center;padding:3px 6px}',
-      '.lc-tag-partial{color:#E6B860;background:rgba(230,184,96,0.16)}',
-      '.lc-tag-todo{color:#8A93A6;background:rgba(138,147,166,0.16)}',
-      '.lc-suggest{flex-shrink:0;font-size:11px;font-weight:700;color:#7CC4E0;background:rgba(46,127,161,0.18);padding:2px 8px;border-radius:99px;white-space:nowrap}',
+      '.lc-tag-done{color:var(--life-color-positive-300,#77c589);background:var(--life-color-positive-850,#062c0f);display:inline-flex;align-items:center;padding:3px 6px}',
+      '.lc-tag-partial{color:var(--life-color-warning-300,#f4a162);background:var(--life-color-warning-900,#321200)}',
+      '.lc-tag-todo{color:' + T.textSubtle + ';background:' + T.hairline + '}',
+      '.lc-suggest{flex-shrink:0;font-size:11px;font-weight:700;color:var(--life-color-primary-300,#7fbcd7);background:' + T.surfaceRaised + ';padding:2px 8px;border-radius:99px;white-space:nowrap}',
       '.lc-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:2px;margin-top:12px}',
       '.lc-crow{display:flex;align-items:center;gap:8px;padding:6px 0}',
       '.lc-cslot{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}',
-      '.lc-cname{font-size:13px;color:#e8ebf0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.lc-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap}',
-      '.lc-link{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:#cbd2de;text-decoration:none;font-weight:600}',
-      '.lc-note{font-size:11px;color:#6f7889}',
+      '.lc-cname{font-size:13px;color:' + T.text + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lc-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:1px solid ' + T.hairline + ';flex-wrap:wrap}',
+      '.lc-link{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:' + T.link + ';text-decoration:none;font-weight:600}',
+      '.lc-note{font-size:11px;color:' + T.textFaint + '}',
     ].join('')
     var style = h('style', { id: '__life-checker-styles__' })
     style.textContent = css
