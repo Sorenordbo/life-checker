@@ -58,10 +58,10 @@
     highlightDefault: false,
     componentSelector: '[class*="sc-"], [data-slot]',
     tokenSelector: '[style*="--life-"], [class*="bg-fill-"], [class*="bg-surface-"], [class*="text-default"], [class*="text-subtle"], [class*="border-default"], [class*="border-subtle"]',
-    // Life tokens (with standalone fallbacks). Components highlight in Life primary;
-    // tokens in accent2 — deliberately NOT Samaritan purple, which Life reserves for AI.
-    componentColor: 'var(--life-color-primary-500, #2e7fa1)',
-    tokenColor: 'var(--life-color-accent2-500, #92702f)',
+    // Life tokens (with standalone fallbacks). Components highlight with a solid
+    // dark-green box; design tokens with a light-green dashed box.
+    componentColor: 'var(--life-color-positive-600, #046e23)',
+    tokenColor: 'var(--life-color-positive-300, #77c589)',
     implemented: null, // [{group, items:[{name, detail, status:'done'|'partial'|'todo'}]}]
     missing: null,     // [{area, current, suggest}]
     components: null,  // [{name, used}] — overrides used-flags on the catalogue
@@ -103,17 +103,41 @@
 
   // ---------------------------------------------------------------- highlight
   var HL_ID = '__life-checker-highlight__'
+  var LABEL_ATTR = 'data-life-label'
+  function clearLabels() {
+    var labeled = document.querySelectorAll('[' + LABEL_ATTR + ']')
+    for (var i = 0; i < labeled.length; i++) labeled[i].removeAttribute(LABEL_ATTR)
+  }
   function applyHighlight() {
     var prev = document.getElementById(HL_ID)
     if (prev) prev.remove()
+    clearLabels()
     if (!state.highlight) return
+    // Tag each named Life component with its name, so the CSS below prints a small
+    // label over its box. Skip an element if an ancestor already carries the same
+    // name — avoids stacking "Card / Card" on a component's sub-parts.
+    var nodes = document.querySelectorAll(cfg.componentSelector)
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i]
+      if (el.hasAttribute('data-life-checker') || el.closest('[data-life-checker]')) continue
+      var name = componentName(el)
+      if (!name) continue
+      var dup = false, p = el.parentElement
+      while (p) { if (p.getAttribute && p.getAttribute(LABEL_ATTR) === name) { dup = true; break } p = p.parentElement }
+      if (!dup) el.setAttribute(LABEL_ATTR, name)
+    }
     var s = document.createElement('style')
     s.id = HL_ID
     s.textContent =
       cfg.componentSelector + ':not([data-life-checker]):not([data-life-checker] *){' +
       'outline:2px solid ' + cfg.componentColor + ' !important;outline-offset:1px !important;}' +
       cfg.tokenSelector + ':not([data-life-checker]):not([data-life-checker] *){' +
-      'outline:2px dashed ' + cfg.tokenColor + ' !important;outline-offset:1px !important;}'
+      'outline:2px dashed ' + cfg.tokenColor + ' !important;outline-offset:1px !important;}' +
+      '[' + LABEL_ATTR + ']{position:relative}' +
+      '[' + LABEL_ATTR + ']::after{content:attr(' + LABEL_ATTR + ');position:absolute;top:0;left:0;' +
+        'transform:translateY(-100%);background:' + cfg.componentColor + ';color:var(--life-color-base-white,#fff);' +
+        'font:700 10px/1.45 Lato,system-ui,sans-serif;padding:1px 6px;border-radius:4px 4px 0 0;white-space:nowrap;' +
+        'pointer-events:none;z-index:2147483647;letter-spacing:.02em}'
     document.head.appendChild(s)
   }
   function setHighlight(on) {
@@ -255,15 +279,22 @@
   // entries as in-use. This is what makes pre-existing Life work count as compliant
   // with zero configuration — whether it was built before or after the checker was
   // added. Runs on mount and on every open, so it tracks SPA route changes too.
+  // Resolve a DOM element to its Life catalogue name via its data-slot (the v1.4+
+  // library tags every element). Keys on the first slot segment, so sub-parts like
+  // "card-header" resolve to "Card". Returns null when it isn't a named Life component.
+  function componentName(el) {
+    if (!el || !el.getAttribute) return null
+    var base = (el.getAttribute('data-slot') || '').split('-')[0]
+    if (!base) return null
+    return SLOT_ALIASES[base] || CAT_LOOKUP[norm(base)] || CAT_LOOKUP[norm(base + 's')] || null
+  }
   function detectUsedComponents() {
     var found = {}
     var nodes = document.querySelectorAll('[data-slot]')
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i]
       if (el.hasAttribute('data-life-checker') || el.closest('[data-life-checker]')) continue
-      var base = (el.getAttribute('data-slot') || '').split('-')[0]
-      if (!base) continue
-      var name = SLOT_ALIASES[base] || CAT_LOOKUP[norm(base)] || CAT_LOOKUP[norm(base + 's')]
+      var name = componentName(el)
       if (name) found[name] = true
     }
     state.detected = found
@@ -390,6 +421,7 @@
       close()
       if (els.badge) { els.badge.remove(); els.badge = null }
       var hl = document.getElementById(HL_ID); if (hl) hl.remove()
+      clearLabels()
       window.LifeChecker.__mounted = false
     },
   }
