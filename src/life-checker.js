@@ -218,9 +218,13 @@
       '.lc-leg{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:' + T.textSubtle + '}',
       '.lc-sw-c{width:16px;height:12px;border-radius:2px;border:2px solid ' + cfg.componentColor + '}',
       '.lc-sw-t{width:16px;height:12px;border-radius:2px;border:2px dashed ' + cfg.tokenColor + '}',
-      '.lc-tabs{flex:0 0 auto;display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid ' + T.hairline + '}',
-      '.lc-tab{flex:1;padding:8px 12px;border:none;border-radius:8px;background:transparent;color:' + T.textSubtle + ';font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .12s,color .12s}',
-      '.lc-tab.lc-active{background:' + T.hairline + ';color:' + T.white + '}',
+      // Life SegmentedControl (filled, sm): recessed rounded track holding equal-width
+      // bold segments; the selected segment is a filled primary pill with white text.
+      '.lc-tabs{flex:0 0 auto;padding:12px 16px;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-segs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--life-color-alpha-black-25, rgba(26,26,26,.3))}',
+      '.lc-tab{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:6px 8px;border:none;border-radius:8px;background:transparent;color:' + T.textSubtle + ';font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .12s,color .12s}',
+      '.lc-tab:not(.lc-active):hover{background:' + T.hairline + ';color:' + T.text + '}',
+      '.lc-tab.lc-active{background:' + T.primary + ';color:' + T.white + '}',
       '.lc-tab:focus-visible{' + focus + '}',
       '.lc-content{flex:1;min-height:0;display:flex;flex-direction:column}',
       '.lc-prog{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid ' + T.hairline + '}',
@@ -372,14 +376,15 @@
     var tabs = availableTabs()
     if (!state.tab || !tabs.some(function (t) { return t.id === state.tab })) state.tab = tabs[0].id
 
-    var tabBar = h('div', { class: 'lc-tabs', role: 'tablist' })
+    var segs = h('div', { class: 'lc-segs', role: 'tablist' })
     tabs.forEach(function (t) {
-      tabBar.appendChild(h('button', {
+      segs.appendChild(h('button', {
         class: 'lc-tab' + (state.tab === t.id ? ' lc-active' : ''), type: 'button',
         role: 'tab', 'aria-selected': String(state.tab === t.id),
         onclick: function () { state.tab = t.id; renderModal() },
       }, [t.label]))
     })
+    var tabBar = h('div', { class: 'lc-tabs' }, [segs])
 
     els.switch = h('button', {
       class: 'lc-switch' + (state.highlight ? ' lc-on' : ''), type: 'button', role: 'switch',
