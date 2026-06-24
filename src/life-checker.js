@@ -1,12 +1,13 @@
 /*
  * Life Checker — a drop-in prototype plugin for the Laerdal Life design system.
  *
- * Zero dependencies. Works in any prototype (React, Vue, plain HTML) — it is a
- * classic script that self-mounts a small "Built on Life" badge in the corner.
- * Click it to open the Life checker: a highlight toggle that visually outlines
- * live Life usage in the running UI, plus reference tabs.
+ * REACT ONLY. The Laerdal Life component library ships React components only, so
+ * "Build with Life" only works in a React project (Vite + React, Next.js, CRA).
+ * The script itself is zero-dependency vanilla JS that self-mounts a "Build with
+ * Life" badge in the corner — click it to open the Life checker: a highlight toggle
+ * that visually outlines live Life usage in the running UI, plus reference tabs.
  *
- * USAGE (any prototype):
+ * USAGE (in a React prototype):
  *   <script src="life-checker.js"></script>
  *
  * Optionally configure (before the script, OR any time after via the API):
@@ -150,7 +151,24 @@
   }
 
   // ---------------------------------------------------------------- styles
+  // Load Lato so the checker renders in the Life typeface even on host pages /
+  // standalone prototypes that don't already include it. Idempotent.
+  function ensureFont() {
+    if (document.getElementById('__life-checker-font__')) return
+    var pre = document.createElement('link')
+    pre.rel = 'preconnect'
+    pre.href = 'https://fonts.gstatic.com'
+    pre.crossOrigin = 'anonymous'
+    document.head.appendChild(pre)
+    var link = document.createElement('link')
+    link.id = '__life-checker-font__'
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap'
+    document.head.appendChild(link)
+  }
+
   function injectStyles() {
+    ensureFont()
     if (document.getElementById('__life-checker-styles__')) return
     // Every colour below is a Life design token (var(--life-color-*)) with a hex
     // fallback, so the checker dogfoods Life when the host app has Life CSS loaded

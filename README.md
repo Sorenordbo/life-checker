@@ -3,17 +3,22 @@
 A tiny, **zero-dependency** drop-in plugin for prototypes built on (or migrating to)
 the Laerdal **Life** design system.
 
-It pins a subtle **“Build with Life”** badge in the corner of any prototype. Click it to:
+> ## ⚛️ React only
+> The Life Checker is for **React** prototypes. The Laerdal Life component library
+> (`@laerdal-medical/life-react-components`) ships **React components only** — there is no
+> Vue, Angular, Svelte, or plain-HTML build — so "Build with Life" only works in a React
+> project (Vite + React, Next.js, Create React App, etc.). If your prototype isn't React,
+> this won't give you Life components.
+
+It pins a subtle **“Build with Life”** badge in the corner of your prototype. Click it to:
 
 - **Highlight Life usage live in the running UI** — toggle on to outline every
-  **Life component** (solid blue box) and every **design-token** usage (purple dashed box).
-  The toggle persists while you keep working, even after the panel is closed.
+  **Life component** (solid dark-green box, labelled with its name) and every **design-token**
+  usage (light-green dashed box). The toggle persists while you keep working, even after the
+  panel is closed.
 - **See coverage** — the **All components** tab auto-detects which Life components are on
   screen and checks them off, so work you did with Life *before* installing the checker still
   counts as compliant. Optional tabs show what’s implemented and what’s still missing.
-
-It works in **any** prototype — React, Vue, or plain HTML — because it’s a classic
-self-mounting script, not a framework component.
 
 ## Install it — just ask Claude Code
 

@@ -1,11 +1,17 @@
 ---
 name: life-checker-install
-description: Use when a designer asks to install, add, or set up the Life Checker (the "Build with Life" badge) in a prototype or project. Installs the Laerdal Life component library and design tokens so the project is ready to build with Life, then drops in the zero-dependency Life Checker badge that auto-detects which Life components and tokens the running UI already uses. Works in any web prototype — plain HTML, Vite/React, Next.js, or Vue. Not for non-Laerdal projects or pure backend work.
+description: Use when a designer asks to install, add, or set up the Life Checker (the "Build with Life" badge) in a REACT prototype or project. Installs the Laerdal Life component library and design tokens so the project is ready to build with Life, then drops in the zero-dependency Life Checker badge that auto-detects which Life components and tokens the running UI already uses. REACT ONLY — the Life component library ships React components only (Vite+React, Next.js, CRA). Not for Vue/Angular/Svelte/plain-HTML projects, non-Laerdal projects, or pure backend work.
 ---
 
 # Install the Life Checker
 
-A designer wants the **Build with Life** badge in their prototype. Installing it does two
+> **⚛️ React only.** The Laerdal Life component library (`@laerdal-medical/life-react-components`)
+> ships **React components only** — there is no Vue, Angular, Svelte, or plain-HTML build. So
+> "Build with Life" only works in a React project (Vite + React, Next.js, Create React App).
+> **Before installing, confirm the project is React.** If it isn't, stop and tell the designer
+> the Life Checker can't give them Life components on their stack — don't install it.
+
+A designer wants the **Build with Life** badge in their React prototype. Installing it does two
 things at once:
 
 1. **Makes the project ready to build with Life** — installs the Life component library and
@@ -31,8 +37,7 @@ If `@laerdal-medical/life-react-components` is already in `package.json`, skip t
 npm install @laerdal-medical/life-react-components @laerdal-medical/skills-react-life-icons
 ```
 
-Both are **public on npm** and require **React 19**. (For a plain-HTML prototype with no
-build step, skip the npm install — the checker still works; Step 2 is all you need.)
+Both are **public on npm** and require **React 19**.
 
 ### 1b. Wire the Life CSS
 
@@ -72,18 +77,11 @@ mkdir -p public
 curl -fsSL https://raw.githubusercontent.com/Sorenordbo/life-checker/main/src/life-checker.js -o public/life-checker.js
 ```
 
-(Use the project's actual static dir — `public/` for Vite, CRA, Next.js, and Vue; the project
-root for a plain-HTML prototype.)
+(Use the project's `public/` dir — served from the site root in Vite, CRA, and Next.js.)
 
-### 2b. Reference it — pick the project's framework
+### 2b. Reference it — pick the React framework
 
-**Plain HTML** — add before `</body>` in the HTML file:
-
-```html
-<script src="life-checker.js"></script>
-```
-
-**Vite / Create React App / Vue** — add to `index.html` before `</body>` (files in `public/`
+**Vite / Create React App** — add to `index.html` before `</body>` (files in `public/`
 are served from the site root):
 
 ```html
