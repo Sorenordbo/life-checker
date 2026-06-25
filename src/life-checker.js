@@ -70,7 +70,7 @@
 
   var cfg = Object.assign({}, DEFAULTS, window.LifeCheckerConfig || {})
   // highlight: 'off' | 'life' | 'gaps'
-  var state = { open: false, tab: null, highlight: 'off', detected: {}, liveVersion: null, liveComponents: null }
+  var state = { open: false, tab: 'main', highlight: 'off', detected: {}, liveVersion: null, liveComponents: null }
   var els = {} // cached DOM refs
   var CATALOG_CACHE_KEY = '__lc_catalog__'
   var CATALOG_CACHE_TTL = 3600000 // 1 hour
@@ -108,6 +108,8 @@
     play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5034 11.1417C21.1655 11.5283 21.1655 12.4789 20.5034 12.8656L8.51815 19.864C7.84659 20.2561 7 19.7755 7 19.0021V5.00518C7 4.23176 7.8466 3.75111 8.51815 4.14325L20.5034 11.1417Z"/></svg>',
     dotOff: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>',
     dotGaps: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+    copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+    idea: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>',
   }
 
   // Life CSS sets --life-color-primary-500 on :root; if absent the packages aren't wired up.
@@ -253,22 +255,23 @@
   function injectStyles() {
     ensureFont()
     if (document.getElementById('__life-checker-styles__')) return
-    // Every colour below is a Life design token (var(--life-color-*)) with a hex
-    // fallback, so the checker dogfoods Life when the host app has Life CSS loaded
-    // and still renders standalone in any prototype. Surfaces use the Life primary
-    // dark scale; greys use the Life neutral scale; whites use base-white.
+    // The checker panel is a fixed dark-mode overlay — it must look the same
+    // regardless of whether the host prototype has Life CSS loaded (Life's tokens
+    // are defined for light-mode use, so letting them inherit would break the panel).
+    // Highlight overlay CSS (applyHighlight) still uses Life vars where appropriate
+    // since those style host-app elements, not the checker panel itself.
     var T = {
-      surface: 'var(--life-color-primary-850, #0f2934)',
-      surfaceRaised: 'var(--life-color-primary-800, #163746)',
-      scrim: 'var(--life-color-alpha-black-50, rgba(26,26,26,.5))',
-      scrimSoft: 'var(--life-color-alpha-black-25, rgba(26,26,26,.3))',
-      hairline: 'var(--life-color-alpha-white-25, rgba(255,255,255,.2))',
-      white: 'var(--life-color-base-white, #ffffff)',
-      text: 'var(--life-color-neutral-100, #e5e5e5)',
-      textSubtle: 'var(--life-color-neutral-300, #ababab)',
-      textFaint: 'var(--life-color-neutral-400, #949494)',
-      link: 'var(--life-color-neutral-200, #cccccc)',
-      primary: 'var(--life-color-primary-500, #2e7fa1)',
+      surface:      '#0f2934',
+      surfaceRaised:'#163746',
+      scrim:        'rgba(26,26,26,.5)',
+      scrimSoft:    'rgba(26,26,26,.3)',
+      hairline:     'rgba(255,255,255,.2)',
+      white:        '#ffffff',
+      text:         '#e5e5e5',
+      textSubtle:   '#ababab',
+      textFaint:    '#949494',
+      link:         '#cccccc',
+      primary:      '#2e7fa1',
     }
     // Spacing/sizes follow the Life 8px grid (4 and 2 allowed); type uses the Life
     // component sizes (10/12/14/16/18) and Lato weights (400/700). The panel is a
@@ -283,103 +286,152 @@
       '.lc-badge-sep{width:1px;height:14px;background:' + T.hairline + ';margin:0 2px;flex-shrink:0}',
       '.lc-bdot{width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:' + T.textSubtle + ';display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;transition:background .12s,color .12s}',
       '.lc-bdot:hover{background:rgba(255,255,255,0.12);color:' + T.white + '}',
-      '.lc-bdot-off.lc-active{background:var(--life-color-neutral-600,#636363);color:' + T.white + '}',
-      '.lc-bdot-life.lc-active{background:' + cfg.componentColor + ';color:' + T.white + '}',
-      '.lc-bdot-gaps.lc-active{background:var(--life-color-warning-500,#d17b00);color:' + T.white + '}',
+      '.lc-bdot-off.lc-active{background:#636363;color:' + T.white + '}',
+      '.lc-bdot-life.lc-active{background:#046e23;color:' + T.white + '}',
+      '.lc-bdot-gaps.lc-active{background:#d17b00;color:' + T.white + '}',
       '.lc-bdot:focus-visible{' + focus + '}',
       '.lc-backdrop{position:fixed;inset:0;background:' + T.scrim + ';display:flex;align-items:flex-end;justify-content:flex-start;padding:16px;z-index:2147483647}',
-      '.lc-panel{width:448px;height:896px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:' + T.surface + ';color:' + T.text + ';border-radius:16px;border:1px solid ' + T.hairline + ';box-shadow:0 16px 48px rgba(0,0,0,0.15);overflow:hidden;font-family:' + FONT + '}',
-      '.lc-header{flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 16px 12px}',
-      '.lc-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:4px}',
+      '.lc-panel{width:520px;height:896px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:' + T.surface + ';color:' + T.text + ';border-radius:16px;border:1px solid ' + T.hairline + ';box-shadow:0 16px 48px rgba(0,0,0,0.15);overflow:hidden;font-family:' + FONT + '}',
+      '.lc-header{flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 20px 16px}',
+      '.lc-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:6px}',
       '.lc-title{font-size:20px;font-weight:700;color:' + T.white + ';line-height:1.2}',
-      '.lc-sub{font-size:12px;color:' + T.textSubtle + ';margin-top:4px;line-height:1.4}',
-      '.lc-x{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:50%;cursor:pointer;padding:0;transition:background .12s;color:var(--life-color-neutral-300,#ababab)}',
+      '.lc-sub{font-size:12px;color:' + T.textSubtle + ';margin-top:6px;line-height:1.5}',
+      '.lc-x{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:50%;cursor:pointer;padding:0;transition:background .12s;color:#ababab}',
       '.lc-x:hover{background:rgba(255,255,255,0.1)}',
       '.lc-x:active{background:rgba(255,255,255,0.16)}',
       '.lc-x:focus-visible{' + focus + '}',
       // Highlight 3-segment control
-      '.lc-hl{flex:0 0 auto;padding:10px 16px 12px}',
+      '.lc-hl{flex:0 0 auto;padding:12px 20px 16px}',
       '.lc-hl-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:8px}',
-      '.lc-hsegs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--life-color-alpha-black-25,rgba(26,26,26,.3))}',
+      '.lc-hsegs{display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(26,26,26,.3)}',
       '.lc-hseg{flex:1;display:inline-flex;align-items:center;justify-content:center;padding:6px 4px;border:none;border-radius:8px;background:transparent;color:' + T.textSubtle + ';font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}',
       '.lc-hseg:not(.lc-active):hover{background:' + T.hairline + ';color:' + T.text + '}',
-      '.lc-hseg.lc-hoff{background:var(--life-color-neutral-600,#636363);color:' + T.white + '}',
+      '.lc-hseg.lc-hoff{background:#636363;color:' + T.white + '}',
       '.lc-hseg.lc-hlife{background:' + T.primary + ';color:' + T.white + '}',
-      '.lc-hseg.lc-hgaps{background:var(--life-color-warning-500,#d17b00);color:' + T.white + '}',
+      '.lc-hseg.lc-hgaps{background:#d17b00;color:' + T.white + '}',
       '.lc-hseg:focus-visible{' + focus + '}',
-      '.lc-legend{display:flex;flex-direction:column;gap:4px;margin-top:8px;min-height:20px}',
+      '.lc-legend{display:flex;flex-direction:column;gap:6px;margin-top:10px}',
       '.lc-legend-hint{font-size:11px;color:' + T.textFaint + ';line-height:1.4}',
-      '.lc-legend-swatches{display:flex;gap:16px}',
+      '.lc-legend-swatches{display:flex;gap:20px}',
       '.lc-leg{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:' + T.textSubtle + '}',
       '.lc-sw-c{width:16px;height:12px;border-radius:2px;border:2px solid ' + cfg.componentColor + '}',
       '.lc-sw-t{width:16px;height:12px;border-radius:2px;border:2px dashed ' + cfg.tokenColor + '}',
-      '.lc-sw-g{width:16px;height:12px;border-radius:2px;border:2px dashed var(--life-color-warning-400,#e8970a);background:rgba(232,151,10,0.15)}',
-      '.lc-install{margin:12px 16px 4px;padding:12px 14px;border-radius:8px;background:' + T.surfaceRaised + ';border:1px solid var(--life-color-border-primary,#a9d3e5)}',
-      '.lc-install-title{font-size:13px;font-weight:700;color:' + T.white + ';margin-bottom:4px}',
-      '.lc-install-desc{font-size:12px;color:' + T.textSubtle + ';line-height:1.5;margin-bottom:10px}',
-      '.lc-install-cmd{font-family:monospace;font-size:11px;background:var(--life-color-alpha-black-25,rgba(26,26,26,.3));color:' + T.link + ';padding:8px 10px;border-radius:6px;margin-bottom:10px;word-break:break-all;user-select:all;line-height:1.5}',
+      '.lc-sw-g{width:16px;height:12px;border-radius:2px;border:2px dashed #e8970a;background:rgba(232,151,10,0.15)}',
+      '.lc-install{margin:16px 20px 8px;padding:16px;border-radius:8px;background:' + T.surfaceRaised + ';border:1px solid #a9d3e5}',
+      '.lc-install-title{font-size:13px;font-weight:700;color:' + T.white + ';margin-bottom:6px}',
+      '.lc-install-desc{font-size:12px;color:' + T.textSubtle + ';line-height:1.6;margin-bottom:12px}',
+      '.lc-install-cmd{font-family:monospace;font-size:11px;background:rgba(26,26,26,.3);color:' + T.link + ';padding:8px 10px;border-radius:6px;margin-bottom:10px;word-break:break-all;user-select:all;line-height:1.5}',
       '.lc-install-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}',
       '.lc-install-npm{font-size:12px;font-weight:700;color:' + T.textSubtle + ';text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-left:auto;border-radius:4px}',
       '.lc-install-npm:hover{color:' + T.white + '}',
       '.lc-content{flex:1;min-height:0;display:flex;flex-direction:column}',
-      '.lc-prog{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px}',
+      '.lc-prog{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:16px 20px}',
       '.lc-count{font-size:18px;font-weight:700;color:' + T.white + '}',
       '.lc-plabel{font-size:12px;color:' + T.textSubtle + '}',
-      '.lc-track{flex:1;height:6px;border-radius:999px;background:var(--life-color-bg-surface-neutral,rgba(255,255,255,0.15));overflow:hidden;position:relative}',
-      '.lc-fill{height:100%;width:100%;border-radius:999px;background:var(--life-color-bg-fill-accent1,#25837e);transition:transform .3s ease}',
-      '.lc-pdot{position:absolute;top:50%;width:4px;height:4px;border-radius:50%;background:var(--life-color-bg-fill-default,rgba(255,255,255,0.45));transform:translateY(-50%);pointer-events:none}',
-      '.lc-body{flex:1;min-height:0;overflow-y:auto;padding:4px 16px 16px;scrollbar-width:thin;scrollbar-color:var(--life-color-alpha-white-25,rgba(255,255,255,.2)) transparent}',
+      '.lc-track{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,0.15);overflow:hidden;position:relative}',
+      '.lc-fill{height:100%;width:100%;border-radius:999px;background:#25837e;transition:transform .3s ease}',
+      '.lc-pdot{position:absolute;top:50%;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.45);transform:translateY(-50%);pointer-events:none}',
+      '.lc-sep-line{height:1px;background:rgba(255,255,255,.1);margin:0 20px;flex-shrink:0}',
+      '.lc-body{flex:1;min-height:0;overflow-y:auto;padding:8px 20px 24px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}',
       '.lc-body::-webkit-scrollbar{width:6px}',
       '.lc-body::-webkit-scrollbar-track{background:transparent}',
-      '.lc-body::-webkit-scrollbar-thumb{background:var(--life-color-alpha-white-25,rgba(255,255,255,.2));border-radius:999px}',
-      '.lc-body::-webkit-scrollbar-thumb:hover{background:var(--life-color-neutral-400,#949494)}',
-      '.lc-sec{margin-top:28px}',
-      '.lc-sec:first-child{margin-top:4px}',
-      '.lc-sectitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:8px}',
-      '.lc-item{padding:8px 0;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:999px}',
+      '.lc-body::-webkit-scrollbar-thumb:hover{background:#949494}',
+      '.lc-sec{margin-top:36px}',
+      '.lc-sec:first-child{margin-top:8px}',
+      '.lc-sectitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:12px}',
+      '.lc-item{padding:12px 0;border-bottom:1px solid ' + T.hairline + '}',
       '.lc-item-main{display:flex;align-items:center;justify-content:space-between;gap:8px}',
       '.lc-item-name{font-size:14px;font-weight:700;color:' + T.text + '}',
-      '.lc-item-detail{font-size:12px;color:' + T.textSubtle + ';line-height:1.5;margin-top:4px}',
-      '.lc-tag{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;white-space:nowrap;border-radius:var(--life-radius-xs,2px);border:1px solid transparent;padding:4px;font-size:14px;font-weight:700;line-height:1}',
+      '.lc-item-detail{font-size:12px;color:' + T.textSubtle + ';line-height:1.6;margin-top:6px}',
+      '.lc-tag{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;white-space:nowrap;border-radius:2px;border:1px solid transparent;padding:4px;font-size:14px;font-weight:700;line-height:1}',
       '.lc-tag svg{width:12px;height:12px}',
-      '.lc-tag-done{background:var(--life-color-bg-surface-positive,#034613);color:var(--life-color-text-positive,#a0d9ad)}',
-      '.lc-tag-partial{background:var(--life-color-bg-surface-warning,#622c02);color:var(--life-color-text-warning,#f8c096)}',
-      '.lc-tag-todo{background:var(--life-color-bg-surface-neutral,#474747);color:var(--life-color-text-subtle,#e5e5e5)}',
-      '.lc-suggest{flex-shrink:0;font-size:12px;font-weight:700;color:var(--life-color-primary-300,#7fbcd7);background:' + T.surfaceRaised + ';padding:2px 8px;border-radius:999px;white-space:nowrap}',
-      '.lc-ask-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;border:2px solid var(--life-color-border-primary,#a9d3e5);border-radius:var(--life-radius-lg,12px);background:transparent;color:var(--life-color-text-primary,#a9d3e5);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,box-shadow .12s}',
+      '.lc-tag-done{background:#034613;color:#a0d9ad}',
+      '.lc-tag-partial{background:#622c02;color:#f8c096}',
+      '.lc-tag-todo{background:#474747;color:#e5e5e5}',
+      '.lc-suggest{flex-shrink:0;font-size:12px;font-weight:700;color:#7fbcd7;background:' + T.surfaceRaised + ';padding:2px 8px;border-radius:999px;white-space:nowrap}',
+      '.lc-ask-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;border:2px solid #a9d3e5;border-radius:12px;background:transparent;color:#a9d3e5;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,box-shadow .12s}',
       '.lc-ask-btn svg{width:16px;height:16px;flex-shrink:0;pointer-events:none}',
-      '.lc-ask-btn:hover{border-color:var(--life-color-border-primary-hover,#f1fbfe);color:var(--life-color-text-primary-hover,#f1fbfe)}',
-      '.lc-ask-btn:active{border-color:var(--life-color-border-primary-active,#d4e9f2);color:var(--life-color-text-primary-active,#d4e9f2)}',
+      '.lc-ask-btn:hover{border-color:#f1fbfe;color:#f1fbfe}',
+      '.lc-ask-btn:active{border-color:#d4e9f2;color:#d4e9f2}',
       '.lc-ask-btn:focus-visible{' + focus + '}',
-      '.lc-grid{column-count:2;column-gap:24px;column-rule:1px solid ' + T.hairline + ';margin-top:12px}',
-      '.lc-crow{display:flex;align-items:center;gap:8px;padding:4px 0;break-inside:avoid;-webkit-column-break-inside:avoid}',
-      '.lc-cslot{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--life-color-positive-400,#37a851)}',
+      '.lc-grid{column-count:2;column-gap:28px;column-rule:1px solid ' + T.hairline + ';margin-top:16px}',
+      '.lc-crow{display:flex;align-items:center;gap:8px;padding:6px 0;break-inside:avoid;-webkit-column-break-inside:avoid}',
+      '.lc-cslot{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#37a851}',
       '.lc-cname{font-size:12px;color:' + T.text + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.lc-footer{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:12px 16px;flex-wrap:wrap}',
+      '.lc-footer{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:16px 20px 16px 12px;flex-wrap:wrap}',
+      '.lc-close-btn{background:transparent;border:1px solid ' + T.hairline + ';color:' + T.textSubtle + ';font-size:12px;font-weight:700;font-family:inherit;padding:5px 14px;border-radius:999px;cursor:pointer;transition:background .12s,color .12s}',
+      '.lc-close-btn:hover{background:rgba(255,255,255,0.08);color:' + T.white + '}',
+      '.lc-close-btn:focus-visible{' + focus + '}',
       '.lc-version{font-size:11px;color:' + T.textFaint + ';font-weight:700;letter-spacing:0.04em}',
       '.lc-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:' + T.link + ';text-decoration:none;font-weight:700;border-radius:4px;margin-left:auto}',
       '.lc-link:focus-visible{' + focus + '}',
       '.lc-badge:focus-visible{' + focus + '}',
+      // Tab row (Coverage | Resources) — Life Tabs underline style
+      '.lc-tabrow{flex:0 0 auto;display:flex;gap:0;padding:0 20px;margin-bottom:4px}',
+      '.lc-tabpill{padding:12px 16px 11px;border:none;border-bottom:2px solid transparent;background:transparent;color:' + T.textSubtle + ';font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:color .12s,border-color .12s;margin-bottom:-1px;white-space:nowrap}',
+      '.lc-tabpill:not(.lc-active):hover{color:' + T.text + '}',
+      '.lc-tabpill.lc-active{color:' + T.white + ';border-bottom-color:' + T.primary + '}',
+      '.lc-tabpill:focus-visible{' + focus + '}',
+      // Resources tab
+      '.lc-res-body{flex:1;min-height:0;overflow-y:auto;padding:8px 20px 24px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}',
+      '.lc-res-body::-webkit-scrollbar{width:6px}',
+      '.lc-res-body::-webkit-scrollbar-track{background:transparent}',
+      '.lc-res-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:999px}',
+      '.lc-res-group{margin-top:32px}',
+      '.lc-res-group:first-child{margin-top:12px}',
+      '.lc-res-grouptitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:12px}',
+      '.lc-res-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid ' + T.hairline + '}',
+      '.lc-res-icon{flex-shrink:0;margin-top:1px;color:' + T.textFaint + '}',
+      '.lc-res-text{flex:1;min-width:0}',
+      '.lc-res-name{font-size:13px;font-weight:700;color:' + T.text + ';line-height:1.3}',
+      '.lc-res-desc{font-size:12px;color:' + T.textSubtle + ';margin-top:4px;line-height:1.5}',
+      '.lc-res-action{flex-shrink:0;align-self:center}',
+      '.lc-res-link-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:' + T.link + ';text-decoration:none;border-radius:4px;padding:2px 4px}',
+      '.lc-res-link-btn:hover{color:' + T.white + '}',
+      '.lc-res-link-btn:focus-visible{' + focus + '}',
+      '.lc-res-copy-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid ' + T.hairline + ';border-radius:999px;background:transparent;color:' + T.textSubtle + ';font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s}',
+      '.lc-res-copy-btn:hover{color:' + T.white + ';border-color:rgba(255,255,255,.4)}',
+      '.lc-res-copy-btn:focus-visible{' + focus + '}',
+      '.lc-skill-pill{display:inline-block;font-family:monospace;font-size:12px;background:rgba(26,26,26,.4);color:#7fbcd7;padding:2px 8px;border-radius:4px;margin-bottom:4px}',
+      '.lc-item-propose{margin-top:8px}',
+      '.lc-propose-btn{background:transparent;border:none;color:#7fbcd7;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px;transition:color .12s}',
+      '.lc-propose-btn:hover{color:#a9d3e5}',
+      '.lc-propose-btn:focus-visible{' + focus + '}',
     ].join('')
     var style = h('style', { id: '__life-checker-styles__' })
     style.textContent = css
     document.head.appendChild(style)
   }
 
+  function sep() { return h('div', { class: 'lc-sep-line' }) }
+
+  // Returns true when the suggest string matches a known Life catalogue entry.
+  // Splits on "/" and "," so "Card / Tile" checks "Card" and "Tile" separately.
+  function suggestInCatalogue(suggest) {
+    if (!suggest) return true
+    var words = suggest.split(/[\s\/,]+/).filter(Boolean)
+    return words.some(function (w) { return !!CAT_LOOKUP[norm(w)] })
+  }
+
   // ---------------------------------------------------------------- modal content
   function renderTabContent() {
     var wrap = h('div', { class: 'lc-content' })
     if (state.highlight === 'life' && cfg.implemented && cfg.implemented.length) {
-      var items = cfg.implemented.reduce(function (a, s) { return a.concat(s.items) }, [])
-      var done = items.filter(function (i) { return i.status === 'done' }).length
-      wrap.appendChild(progress(done, items.length, 'areas fully on Life'))
+      // Only show done/partial — todo items are not Life-compliant yet
+      var allItems = cfg.implemented.reduce(function (a, s) { return a.concat(s.items) }, [])
+      var activeItems = allItems.filter(function (i) { return i.status !== 'todo' })
+      var done = activeItems.filter(function (i) { return i.status === 'done' }).length
+      wrap.appendChild(progress(done, activeItems.length, 'areas on Life'))
       var body = h('div', { class: 'lc-body' })
       cfg.implemented.forEach(function (sec) {
+        var visibleItems = sec.items.filter(function (i) { return i.status !== 'todo' })
+        if (!visibleItems.length) return
         var s = h('div', { class: 'lc-sec' }, [h('div', { class: 'lc-sectitle' }, [sec.group])])
-        sec.items.forEach(function (it) { s.appendChild(implItem(it)) })
+        visibleItems.forEach(function (it) { s.appendChild(implItem(it)) })
         body.appendChild(s)
       })
-      wrap.appendChild(body)
+      wrap.appendChild(sep()); wrap.appendChild(body); wrap.appendChild(sep())
     } else if (state.highlight === 'gaps' && cfg.missing && cfg.missing.length) {
       wrap.appendChild(progress(cfg.missing.length, null, 'areas to migrate to Life'))
       var b2 = h('div', { class: 'lc-body' })
@@ -420,15 +472,28 @@
             showCopied()
           }
         }
-        b2.appendChild(h('div', { class: 'lc-item' }, [
+        var itemChildren = [
           h('div', { class: 'lc-item-main' }, [
             h('span', { class: 'lc-item-name' }, [m.area]),
             askBtn,
           ]),
           h('div', { class: 'lc-item-detail' }, [m.current]),
-        ]))
+        ]
+        if (!suggestInCatalogue(m.suggest)) {
+          var proposePrompt =
+            'The "' + m.area + '" component in this prototype (currently: ' + m.current + ') ' +
+            'doesn\'t exist in the Laerdal Life design system yet but seems like a good candidate. ' +
+            'Draft a GitHub issue proposing it as an official Life component at ' +
+            'Laerdal-Medical/life-react-components, following the contribution proposal template ' +
+            'from the /life-components skill. Include what it is, the use case, visible variants ' +
+            'and states, and which Life design tokens it uses.'
+          var propBtn = h('button', { class: 'lc-propose-btn', type: 'button', html: SVG.idea + ' Propose to Life' })
+          propBtn.onclick = function () { copyText(proposePrompt, propBtn, 'Paste into Claude') }
+          itemChildren.push(h('div', { class: 'lc-item-propose' }, [propBtn]))
+        }
+        b2.appendChild(h('div', { class: 'lc-item' }, itemChildren))
       })
-      wrap.appendChild(b2)
+      wrap.appendChild(sep()); wrap.appendChild(b2); wrap.appendChild(sep())
     } else {
       if (!isLifeInstalled()) {
         var installCmd = 'npm install @laerdal-medical/life-react-components @laerdal-medical/skills-react-life-icons'
@@ -477,7 +542,7 @@
         grid.appendChild(row)
       })
       b3.appendChild(grid)
-      wrap.appendChild(b3)
+      wrap.appendChild(sep()); wrap.appendChild(b3); wrap.appendChild(sep())
     }
     return wrap
   }
@@ -545,6 +610,112 @@
     ])
   }
 
+  function setTab(val) {
+    state.tab = val
+    if (state.open) renderModal()
+  }
+
+  function copyText(text, btn, doneLabel) {
+    var orig = btn.innerHTML
+    function done() { btn.innerHTML = SVG.check + ' ' + doneLabel; setTimeout(function () { btn.innerHTML = orig }, 2000) }
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'
+      document.body.appendChild(ta); ta.select(); try { document.execCommand('copy') } catch (e) {} document.body.removeChild(ta); done()
+    }
+    navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text).then(done).catch(fallback) : fallback()
+  }
+
+  function renderResources() {
+    var CHECKER_URL = 'https://github.com/Sorenordbo/life-checker'
+    var INSTALL_PROMPT = 'Install the Life Checker from ' + CHECKER_URL
+
+    function resLink(name, desc, href) {
+      var a = h('a', { class: 'lc-res-link-btn', href: href, target: '_blank', rel: 'noopener noreferrer',
+        html: 'Open ' + SVG.ext })
+      return h('div', { class: 'lc-res-item' }, [
+        h('span', { class: 'lc-res-icon', html: SVG.ext }),
+        h('div', { class: 'lc-res-text' }, [
+          h('div', { class: 'lc-res-name' }, [name]),
+          h('div', { class: 'lc-res-desc' }, [desc]),
+        ]),
+        h('div', { class: 'lc-res-action' }, [a]),
+      ])
+    }
+
+    function skillItem(skill, desc) {
+      var btn = h('button', { class: 'lc-res-copy-btn', type: 'button', html: SVG.copy + ' Copy' })
+      btn.onclick = function () { copyText(skill, btn, 'Copied') }
+      return h('div', { class: 'lc-res-item' }, [
+        h('span', { class: 'lc-res-icon', html: SVG.play }),
+        h('div', { class: 'lc-res-text' }, [
+          h('div', { class: 'lc-skill-pill' }, [skill]),
+          h('div', { class: 'lc-res-desc' }, [desc]),
+        ]),
+        h('div', { class: 'lc-res-action' }, [btn]),
+      ])
+    }
+
+    function copyItem(name, desc, text, btnLabel, doneLabel) {
+      var btn = h('button', { class: 'lc-res-copy-btn', type: 'button', html: SVG.copy + ' ' + btnLabel })
+      btn.onclick = function () { copyText(text, btn, doneLabel) }
+      return h('div', { class: 'lc-res-item' }, [
+        h('span', { class: 'lc-res-icon', html: SVG.copy }),
+        h('div', { class: 'lc-res-text' }, [
+          h('div', { class: 'lc-res-name' }, [name]),
+          h('div', { class: 'lc-res-desc' }, [desc]),
+        ]),
+        h('div', { class: 'lc-res-action' }, [btn]),
+      ])
+    }
+
+    var body = h('div', { class: 'lc-res-body' })
+
+    var dsGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['Design system'])])
+    dsGroup.appendChild(resLink('Life design system', 'Guidelines, principles, and the full token reference', 'https://life.laerdal.com/'))
+    dsGroup.appendChild(resLink('Component library (Storybook)', 'Live component demos, props, and usage examples', 'https://laerdal-medical.github.io/life-react-components'))
+    dsGroup.appendChild(resLink('Icon showcase', 'All SystemIcons, ContentIcons, and HeartSaverIcons', 'https://laerdal-medical.github.io/skills-react-life-icons'))
+    dsGroup.appendChild(resLink('Life on npm', 'Package page for @laerdal-medical/life-react-components', 'https://www.npmjs.com/package/@laerdal-medical/life-react-components'))
+    body.appendChild(dsGroup)
+
+    var ccGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['Build with Claude Code'])])
+    ccGroup.appendChild(skillItem('/life-components', 'Use existing Life React components in your app — picks components, applies design tokens, handles install'))
+    ccGroup.appendChild(skillItem('/life-composition', 'Design foundations for any stack — color palette, typography, spacing, accessibility, writing guidelines'))
+    body.appendChild(ccGroup)
+
+    var GENERIC_PROPOSE_PROMPT =
+      'I\'ve built a component in this prototype that doesn\'t exist in the Laerdal Life ' +
+      'design system yet, but seems like it should. Draft a GitHub issue proposing it as an ' +
+      'official Life component at Laerdal-Medical/life-react-components, following the ' +
+      'contribution proposal template from the /life-components skill. Include: what it is, ' +
+      'the use case, visible variants and states, and which Life design tokens it uses.'
+
+    var contributeGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['Contribute to Life'])])
+    contributeGroup.appendChild(resLink(
+      'Open a proposal issue',
+      'Suggest a new component directly on the life-react-components repo',
+      'https://github.com/Laerdal-Medical/life-react-components/issues/new/choose'
+    ))
+    contributeGroup.appendChild(copyItem(
+      'Propose via Claude Code',
+      'Copies a prompt — describe your component and Claude drafts the full proposal issue',
+      GENERIC_PROPOSE_PROMPT, 'Copy prompt', 'Paste into Claude'
+    ))
+    body.appendChild(contributeGroup)
+
+    var checkerGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['This checker'])])
+    checkerGroup.appendChild(resLink('Source on GitHub', 'The life-checker repo — issues, changelog, and updates', CHECKER_URL))
+    checkerGroup.appendChild(copyItem(
+      'Install in another project',
+      'Copies the prompt — paste into Claude Code in any React prototype',
+      INSTALL_PROMPT, 'Copy prompt', 'Paste into Claude'
+    ))
+    body.appendChild(checkerGroup)
+
+    var wrap = h('div', { class: 'lc-content' })
+    wrap.appendChild(sep()); wrap.appendChild(body); wrap.appendChild(sep())
+    return wrap
+  }
+
   // ---------------------------------------------------------------- modal shell
   function renderModal() {
     if (els.backdrop) els.backdrop.remove()
@@ -572,27 +743,51 @@
       ] : []
     )
 
-    var panel = h('div', { class: 'lc-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': cfg.title,
-      onclick: function (e) { e.stopPropagation() } }, [
+    function mkTabPill(val, label) {
+      var btn = h('button', {
+        class: 'lc-tabpill' + (state.tab === val ? ' lc-active' : ''),
+        type: 'button', role: 'tab', 'aria-selected': String(state.tab === val),
+      }, [label])
+      btn.onclick = function () { setTab(val) }
+      return btn
+    }
+
+    var panelChildren = [
       h('div', { class: 'lc-header' }, [
         h('div', {}, [h('div', { class: 'lc-eyebrow' }, ['Prototype plugin']), h('div', { class: 'lc-title' }, [cfg.title]), h('div', { class: 'lc-sub' }, [cfg.subtitle])]),
         h('button', { class: 'lc-x', type: 'button', 'aria-label': 'Close', 'data-slot': 'icon-button', html: SVG.close, onclick: close }),
       ]),
-      h('div', { class: 'lc-hl' }, [
+      h('div', { class: 'lc-tabrow', role: 'tablist' }, [
+        mkTabPill('main', 'Coverage'),
+        mkTabPill('resources', 'Resources'),
+      ]),
+      sep(),
+    ]
+
+    if (state.tab === 'main') {
+      panelChildren.push(h('div', { class: 'lc-hl' }, [
         h('div', { class: 'lc-hsegs', role: 'tablist' }, [
           mkHseg('off', 'Off'),
           mkHseg('life', 'Life-compliant'),
           mkHseg('gaps', 'Fix gaps'),
         ]),
         legend,
-      ]),
-      renderTabContent(),
-      h('div', { class: 'lc-footer' }, [
-        state.liveVersion ? h('span', { class: 'lc-version' }, ['Life v' + state.liveVersion]) : null,
-        h('a', { class: 'lc-link', href: cfg.docsUrl, target: '_blank', rel: 'noopener noreferrer',
-          html: 'Open the Life design system ' + SVG.ext }),
-      ]),
-    ])
+      ]))
+      panelChildren.push(renderTabContent())
+    } else {
+      panelChildren.push(renderResources())
+    }
+
+    panelChildren.push(h('div', { class: 'lc-footer' }, [
+      h('button', { class: 'lc-close-btn', type: 'button', onclick: close }, ['Close']),
+      state.liveVersion ? h('span', { class: 'lc-version' }, ['Life v' + state.liveVersion]) : null,
+      h('a', { class: 'lc-link', href: cfg.docsUrl, target: '_blank', rel: 'noopener noreferrer',
+        html: 'Open the Life design system ' + SVG.ext }),
+    ]))
+
+    var panel = h('div', { class: 'lc-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': cfg.title,
+      onclick: function (e) { e.stopPropagation() } })
+    panelChildren.forEach(function (c) { if (c) panel.appendChild(c) })
 
     els.backdrop = h('div', { class: 'lc-backdrop', 'data-life-checker': '', role: 'presentation', onclick: close }, [panel])
     document.body.appendChild(els.backdrop)

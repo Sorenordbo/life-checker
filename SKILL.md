@@ -27,19 +27,79 @@ Work through the steps in order. Skip a step only if its check shows it's alread
 
 ---
 
+## Step 0 — Install the companion Claude Code skills
+
+These two skills teach Claude Code *how to build with Life* — they are what the colleague will
+invoke after the checker is installed to start lifefying their UI. Install them globally so
+they're available in every future Claude Code session:
+
+```bash
+SKILLS_DIR="$HOME/.claude/skills"
+CHECKER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mkdir -p "$SKILLS_DIR"
+cp "$CHECKER_DIR/skills/life-components.md" "$SKILLS_DIR/"
+cp "$CHECKER_DIR/skills/life-composition.md" "$SKILLS_DIR/"
+```
+
+If Claude Code is running from a fetched (not cloned) repo, use these instead:
+
+```bash
+mkdir -p ~/.claude/skills
+curl -fsSL https://raw.githubusercontent.com/Sorenordbo/life-checker/main/skills/life-components.md -o ~/.claude/skills/life-components.md
+curl -fsSL https://raw.githubusercontent.com/Sorenordbo/life-checker/main/skills/life-composition.md -o ~/.claude/skills/life-composition.md
+```
+
+After this step the colleague can invoke:
+- **`/life-components`** — pick existing Life components, apply design tokens, get install help
+- **`/life-composition`** — color palette, typography, spacing, accessibility, writing guidelines
+
+These skills are bundled snapshots. Laerdal employees can pull the originals from
+`Laerdal-Medical/dp-laerdal-skills` to get the latest version.
+
+---
+
 ## Step 1 — Make the project ready to build with Life
 
 If `@laerdal-medical/life-react-components` is already in `package.json`, skip to Step 2.
 
-### 1a. Install the Life packages
+### 1a. Configure GitHub Packages auth
+
+The Life packages are published to **GitHub Packages** (not public npm). They require a GitHub
+token with `read:packages` scope. Check if auth is already configured:
+
+```bash
+test -f .npmrc && grep -q "npm.pkg.github.com" .npmrc && echo "project .npmrc: OK" || echo "project .npmrc: missing"
+test -f ~/.npmrc && grep -q "npm.pkg.github.com" ~/.npmrc && echo "global .npmrc: OK" || echo "global .npmrc: missing"
+gh auth status 2>/dev/null | grep -q "Logged in" && echo "gh auth: OK" || echo "gh auth: not logged in"
+```
+
+If both `.npmrc` checks are missing, add a project-level `.npmrc` (checked in, safe — token
+comes from the environment, not hardcoded):
+
+```
+@laerdal-medical:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then export the token for the current shell (reads from the `gh` CLI auth you already have):
+
+```bash
+export GITHUB_TOKEN=$(gh auth token)
+```
+
+> If `gh auth status` showed "not logged in", the colleague needs to run `gh auth login` first
+> (web browser flow, one-time). Don't proceed to install until that's done.
+
+### 1b. Install the Life packages
 
 ```bash
 npm install @laerdal-medical/life-react-components @laerdal-medical/skills-react-life-icons
 ```
 
-Both are **public on npm** and require **React 19**.
+Both require **React 19**. If the project is on React 18, offer to upgrade. If declined,
+install with `--legacy-peer-deps` and warn that Form-related components may misbehave.
 
-### 1b. Wire the Life CSS
+### 1c. Wire the Life CSS
 
 Add these four imports to the project's global stylesheet (`src/index.css`, `src/main.css`,
 `app/globals.css`, or whatever the project uses), in this order, before any `@tailwind utilities`:
@@ -55,9 +115,20 @@ This gives the project Lato, every Life CSS variable, the Tailwind preset that e
 tokens as classes (`bg-fill-primary`, `text-default`, `border-subtle`, …), and the base theme.
 No `ThemeProvider` is needed.
 
-> For the full set of rules on building with Life (components, icons, color, type, spacing,
-> a11y, UI writing), follow the **life-guard** skill. The Life Checker just measures coverage;
-> life-guard governs how you build.
+> **Building with Life — two companion skills:**
+>
+> - **`/life-components`** — use this when building *in* the codebase. It governs which
+>   existing Life React components to reach for, how to apply design-token Tailwind classes,
+>   and when to flag a new pattern for upstream contribution. Load it whenever you're about
+>   to vibe-code UI in a React project that has (or is getting) Life installed.
+>
+> - **`/life-composition`** — use this for design foundations: the full color palette,
+>   typography scale, spacing tokens, grid, accessibility (WCAG 2.2 AA), and UI writing
+>   guidelines. It applies in any stack — including environments where the npm package can't
+>   be installed (Figma Make, Lovable, Webflow, vanilla HTML). Load it when you need the
+>   canonical token values, or when building Life-looking UI without the React library.
+>
+> The Life Checker measures coverage; these two skills govern how to build.
 
 ---
 
