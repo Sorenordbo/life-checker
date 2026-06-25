@@ -7,7 +7,10 @@
     "src/life-checker.js"
   ],
   "scripts": {
-    "demo": "python3 -m http.server 4178"
+    "dev": "vite",
+    "demo": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "laerdal",
@@ -17,5 +20,8 @@
     "plugin",
     "checker"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^8.1.0"
+  }
 }

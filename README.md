@@ -16,7 +16,7 @@ It pins a subtle **“Build with Life”** badge in the corner of your prototype
   **Life component** (solid dark-green box, labelled with its name) and every **design-token**
   usage (light-green dashed box). The toggle persists while you keep working, even after the
   panel is closed.
-- **See coverage** — the **All components** tab auto-detects which Life components are on
+- **See coverage** — the **All Life components** tab auto-detects which Life components are on
   screen and checks them off, so work you did with Life *before* installing the checker still
   counts as compliant. Optional tabs show what’s implemented and what’s still missing.
 
@@ -43,7 +43,7 @@ component catalogue work with no configuration.
 
 ### Optional configuration
 
-The **All components** tab fills itself by scanning the live UI — no config needed.
+The **All Life components** tab fills itself by scanning the live UI — no config needed.
 Supply data only to add the curated “Implemented” and “Missing Life” tabs. Either set
 a global **before** the script, or call the API any time after.
 
@@ -96,8 +96,13 @@ window.LifeChecker.configure({
 ## Develop
 
 ```bash
-npm run demo   # serves ./demo at http://localhost:4178
+npm install    # first time only
+npm run dev    # Vite dev server with live reload
 ```
+
+Then open **http://localhost:4178/demo/** (in VS Code's Simple Browser, or any
+browser). It uses Vite, so the demo **refreshes automatically** whenever you save
+`src/life-checker.js` — no manual reload.
 
 `src/life-checker.js` is the **source of truth**. Prototypes should reference it
 (local `file:` dependency, or a hosted URL) rather than copy it, so they stay

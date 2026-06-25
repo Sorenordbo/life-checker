@@ -110,7 +110,7 @@ Run the project's dev server and open it. Confirm:
 - A **Build with Life** pill appears in the bottom-left corner.
 - Clicking it opens the panel; the **highlight toggle** outlines Life components (solid box)
   and design-token usage (dashed box) in the live UI.
-- The **All components** tab shows checkmarks against Life components currently on screen —
+- The **All Life components** tab shows checkmarks against Life components currently on screen —
   this is the auto-detection working. Navigate the prototype with the panel open to see more
   light up as Life components render on other views.
 
