@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Life Checker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Highlight Laerdal Life design system usage in any running app. Click the toolbar button to inject the checker.",
   "action": {
     "default_title": "Life Checker",

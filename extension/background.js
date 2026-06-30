@@ -11,6 +11,7 @@ chrome.action.onClicked.addListener(async (tab) => {
       target: { tabId: tab.id },
       func: () => {
         if (window.LifeChecker) {
+          window.LifeChecker.configure({ hideInstallPrompt: true });
           window.LifeChecker.setHighlight('life');
           window.LifeChecker.open();
         }
