@@ -294,7 +294,9 @@
       '.lc-panel{width:520px;height:896px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:' + T.surface + ';color:' + T.text + ';border-radius:16px;border:1px solid ' + T.hairline + ';box-shadow:0 16px 48px rgba(0,0,0,0.15);overflow:hidden;font-family:' + FONT + '}',
       '.lc-header{flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 20px 16px}',
       '.lc-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:6px;display:flex;align-items:center;gap:6px}',
-      '.lc-beta{background:#d17b00;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 6px;border-radius:4px;text-transform:uppercase}',
+      '.lc-beta{position:relative;background:#d17b00;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 6px;border-radius:4px;text-transform:uppercase;cursor:default}',
+      '.lc-beta::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);width:220px;background:#1e1e1e;color:#e8e8e8;font-size:11px;font-weight:400;line-height:1.5;letter-spacing:0;text-transform:none;padding:8px 10px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.4);pointer-events:none;opacity:0;transition:opacity .15s;z-index:10}',
+      '.lc-beta:hover::after{opacity:1}',
       '.lc-title{font-size:20px;font-weight:700;color:' + T.white + ';line-height:1.2}',
       '.lc-sub{font-size:12px;color:' + T.textSubtle + ';margin-top:6px;line-height:1.5}',
       '.lc-x{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:50%;cursor:pointer;padding:0;transition:background .12s;color:#ababab}',
@@ -704,6 +706,36 @@
     ))
     body.appendChild(contributeGroup)
 
+    var SVG_INFO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+    function infoItem(name, desc) {
+      return h('div', { class: 'lc-res-item' }, [
+        h('span', { class: 'lc-res-icon', html: SVG_INFO }),
+        h('div', { class: 'lc-res-text' }, [
+          h('div', { class: 'lc-res-name' }, [name]),
+          h('div', { class: 'lc-res-desc' }, [desc]),
+        ]),
+      ])
+    }
+
+    var howGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['How it works'])])
+    howGroup.appendChild(infoItem(
+      'Life components → data-slot',
+      'Every Life React component sets a data-slot attribute on its root DOM element (e.g. data-slot="button"). The checker scans the page for these and matches them to known component names.'
+    ))
+    howGroup.appendChild(infoItem(
+      'Design tokens → CSS variables',
+      'The checker looks for inline styles using var(--life-color-*) and Tailwind utility classes like bg-fill-*, text-default, and border-subtle — all of which come from the Life token layer.'
+    ))
+    howGroup.appendChild(infoItem(
+      'What it can miss',
+      'If a Life component is wrapped inside a custom component that strips or doesn\'t forward the data-slot attribute, the checker won\'t see it. This is the main reason the beta warning exists.'
+    ))
+    howGroup.appendChild(infoItem(
+      'How to verify manually',
+      'Open browser DevTools, inspect any element the checker has highlighted, and confirm data-slot is present. If you suspect a false negative, inspect the element — a missing data-slot means the attribute was stripped by a wrapper.'
+    ))
+    body.appendChild(howGroup)
+
     var checkerGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['This checker'])])
     checkerGroup.appendChild(resLink('Source on GitHub', 'The life-checker repo — issues, changelog, and updates', CHECKER_URL))
     checkerGroup.appendChild(copyItem(
@@ -756,7 +788,7 @@
 
     var panelChildren = [
       h('div', { class: 'lc-header' }, [
-        h('div', {}, [h('div', { class: 'lc-eyebrow' }, [h('span', { class: 'lc-beta' }, ['Beta']), ' · Prototype plugin']), h('div', { class: 'lc-title' }, [cfg.title]), h('div', { class: 'lc-sub' }, [cfg.subtitle])]),
+        h('div', {}, [h('div', { class: 'lc-eyebrow' }, [h('span', { class: 'lc-beta', 'data-tip': "The checker doesn’t always identify components correctly, so parts of the page may not be flagged. We’re working on improving it." }, ['Beta']), ' · Prototype plugin']), h('div', { class: 'lc-title' }, [cfg.title]), h('div', { class: 'lc-sub' }, [cfg.subtitle])]),
         h('button', { class: 'lc-x', type: 'button', 'aria-label': 'Close', 'data-slot': 'icon-button', html: SVG.close, onclick: close }),
       ]),
       h('div', { class: 'lc-tabrow', role: 'tablist' }, [
