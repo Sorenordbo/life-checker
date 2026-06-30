@@ -57,6 +57,7 @@
     subtitle: 'How much of the Laerdal Life design system this prototype uses',
     docsUrl: 'https://life.laerdal.com/',
     highlightDefault: false,
+    hideInstallPrompt: false,
     componentSelector: '[class*="sc-"], [data-slot]',
     tokenSelector: '[style*="--life-"], [class*="bg-fill-"], [class*="bg-surface-"], [class*="text-default"], [class*="text-subtle"], [class*="border-default"], [class*="border-subtle"]',
     // Life tokens (with standalone fallbacks). Components highlight with a solid
@@ -498,7 +499,7 @@
       })
       wrap.appendChild(sep()); wrap.appendChild(b2); wrap.appendChild(sep())
     } else {
-      if (!isLifeInstalled()) {
+      if (!cfg.hideInstallPrompt && !isLifeInstalled()) {
         var installCmd = 'npm install @laerdal/life-react-components @laerdal-medical/skills-react-life-icons'
         var installClaudePrompt =
           'Install the Laerdal Life React component library in this prototype.\n\n' +
