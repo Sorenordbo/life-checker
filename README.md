@@ -1,4 +1,6 @@
-# Life Checker
+# Life Checker &nbsp;![Beta](https://img.shields.io/badge/status-beta-orange)
+
+> **This is a beta tool.** Expect rough edges and breaking changes between versions.
 
 A tiny, **zero-dependency** drop-in plugin for prototypes built on (or migrating to)
 the Laerdal **Life** design system.

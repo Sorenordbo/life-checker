@@ -52,7 +52,7 @@
   // Detection selectors. Defaults cover both styled-components-based Life usage
   // (class "sc-…") and Tailwind-class Life-token usage (bg-fill-*, etc.).
   var DEFAULTS = {
-    badgeText: 'Build with Life',
+    badgeText: 'Build with Life · Beta',
     title: 'Life checker',
     subtitle: 'How much of the Laerdal Life design system this prototype uses',
     docsUrl: 'https://life.laerdal.com/',
@@ -293,7 +293,8 @@
       '.lc-backdrop{position:fixed;inset:0;background:' + T.scrim + ';display:flex;align-items:flex-end;justify-content:flex-start;padding:16px;z-index:2147483647}',
       '.lc-panel{width:520px;height:896px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:' + T.surface + ';color:' + T.text + ';border-radius:16px;border:1px solid ' + T.hairline + ';box-shadow:0 16px 48px rgba(0,0,0,0.15);overflow:hidden;font-family:' + FONT + '}',
       '.lc-header{flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 20px 16px}',
-      '.lc-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:6px}',
+      '.lc-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + T.textFaint + ';margin-bottom:6px;display:flex;align-items:center;gap:6px}',
+      '.lc-beta{background:#d17b00;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 6px;border-radius:4px;text-transform:uppercase}',
       '.lc-title{font-size:20px;font-weight:700;color:' + T.white + ';line-height:1.2}',
       '.lc-sub{font-size:12px;color:' + T.textSubtle + ';margin-top:6px;line-height:1.5}',
       '.lc-x{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:50%;cursor:pointer;padding:0;transition:background .12s;color:#ababab}',
@@ -439,7 +440,7 @@
         var prompt = 'In this prototype, find the ' + m.area +
           ' (currently implemented as: ' + m.current + ')' +
           ' and replace it with the Life React component "' + m.suggest + '"' +
-          ' from @laerdal-medical/life-react-components.' +
+          ' from @laerdal/life-react-components.' +
           ' Import the component, wire up equivalent props and event handlers, and remove the hand-rolled code.'
         var btnLabel = 'Fix with Claude Code'
         var btnDone = SVG.check + ' Copied! Paste into Claude'
@@ -496,15 +497,16 @@
       wrap.appendChild(sep()); wrap.appendChild(b2); wrap.appendChild(sep())
     } else {
       if (!isLifeInstalled()) {
-        var installCmd = 'npm install @laerdal-medical/life-react-components @laerdal-medical/skills-react-life-icons'
+        var installCmd = 'npm install @laerdal/life-react-components @laerdal-medical/skills-react-life-icons'
         var installClaudePrompt =
           'Install the Laerdal Life React component library in this prototype.\n\n' +
-          '1. Run: npm install @laerdal-medical/life-react-components @laerdal-medical/skills-react-life-icons\n\n' +
+          '1. Run: npm install @laerdal/life-react-components @laerdal-medical/skills-react-life-icons\n\n' +
+          '   NOTE: @laerdal/life-react-components is on the public npm registry — no .npmrc or special registry setup needed.\n\n' +
           '2. Add these imports to the global stylesheet (e.g. src/index.css), in this order, before any @tailwind utilities:\n' +
-          "   @import '@laerdal-medical/life-react-components/life-font.css';\n" +
-          "   @import '@laerdal-medical/life-react-components/style.css';\n" +
-          "   @import '@laerdal-medical/life-react-components/tailwind-setup.css';\n" +
-          "   @import '@laerdal-medical/life-react-components/life-theme.css';\n\n" +
+          "   @import '@laerdal/life-react-components/life-font.css';\n" +
+          "   @import '@laerdal/life-react-components/style.css';\n" +
+          "   @import '@laerdal/life-react-components/tailwind-setup.css';\n" +
+          "   @import '@laerdal/life-react-components/life-theme.css';\n\n" +
           'This gives the project Lato, all Life CSS variables, the Tailwind preset (bg-fill-*, text-default, border-subtle …), and the base theme. No ThemeProvider needed.'
         function makeInstallBtn(text, initHtml, doneHtml) {
           var btn = h('button', { class: 'lc-ask-btn', type: 'button', html: initHtml })
@@ -525,7 +527,7 @@
           h('div', { class: 'lc-install-cmd' }, [installCmd]),
           h('div', { class: 'lc-install-actions' }, [
             makeInstallBtn(installClaudePrompt, 'Fix with Claude Code', 'Paste into Claude'),
-            h('a', { class: 'lc-install-npm', href: 'https://www.npmjs.com/package/@laerdal-medical/life-react-components', target: '_blank', rel: 'noopener noreferrer', html: 'Life on npm ' + SVG.ext }),
+            h('a', { class: 'lc-install-npm', href: 'https://www.npmjs.com/package/@laerdal/life-react-components', target: '_blank', rel: 'noopener noreferrer', html: 'Life on npm ' + SVG.ext }),
           ]),
         ]))
       }
@@ -674,7 +676,7 @@
     dsGroup.appendChild(resLink('Life design system', 'Guidelines, principles, and the full token reference', 'https://life.laerdal.com/'))
     dsGroup.appendChild(resLink('Component library (Storybook)', 'Live component demos, props, and usage examples', 'https://laerdal-medical.github.io/life-react-components'))
     dsGroup.appendChild(resLink('Icon showcase', 'All SystemIcons, ContentIcons, and HeartSaverIcons', 'https://laerdal-medical.github.io/skills-react-life-icons'))
-    dsGroup.appendChild(resLink('Life on npm', 'Package page for @laerdal-medical/life-react-components', 'https://www.npmjs.com/package/@laerdal-medical/life-react-components'))
+    dsGroup.appendChild(resLink('Life on npm', 'Package page for @laerdal/life-react-components', 'https://www.npmjs.com/package/@laerdal/life-react-components'))
     body.appendChild(dsGroup)
 
     var ccGroup = h('div', { class: 'lc-res-group' }, [h('div', { class: 'lc-res-grouptitle' }, ['Build with Claude Code'])])
@@ -754,7 +756,7 @@
 
     var panelChildren = [
       h('div', { class: 'lc-header' }, [
-        h('div', {}, [h('div', { class: 'lc-eyebrow' }, ['Prototype plugin']), h('div', { class: 'lc-title' }, [cfg.title]), h('div', { class: 'lc-sub' }, [cfg.subtitle])]),
+        h('div', {}, [h('div', { class: 'lc-eyebrow' }, [h('span', { class: 'lc-beta' }, ['Beta']), ' · Prototype plugin']), h('div', { class: 'lc-title' }, [cfg.title]), h('div', { class: 'lc-sub' }, [cfg.subtitle])]),
         h('button', { class: 'lc-x', type: 'button', 'aria-label': 'Close', 'data-slot': 'icon-button', html: SVG.close, onclick: close }),
       ]),
       h('div', { class: 'lc-tabrow', role: 'tablist' }, [
@@ -821,7 +823,7 @@
       }
     } catch (e) {}
 
-    fetch('https://registry.npmjs.org/@laerdal-medical%2Flife-react-components/latest')
+    fetch('https://registry.npmjs.org/@laerdal%2Flife-react-components/latest')
       .then(function (r) { return r.ok ? r.json() : Promise.reject() })
       .then(function (pkg) {
         var names = []
