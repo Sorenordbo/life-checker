@@ -40,13 +40,17 @@
 
   // Maps a Life component's data-slot name (the v1.4+ Tailwind library tags every
   // element it renders with data-slot="button", "card", …) to its catalogue entry.
-  // We key on the FIRST segment of the slot, so sub-parts like "card-header" or
-  // "dropdown-trigger" still count toward their parent component.
+  // We try the FULL slot first (multi-word components like "action-chip"), then its
+  // first segment, so sub-parts like "card-header" or "dropdown-trigger" still count
+  // toward their parent component.
   var SLOT_ALIASES = {
     banner: 'Banners', progress: 'LinearProgress', segmented: 'SegmentControl',
     tooltip: 'Tooltips', toggle: 'Toggles', modal: 'Modals', dialog: 'Modals',
     input: 'InputFields', chip: 'Chips', loader: 'LoadingIndicator',
     hyperlink: 'HyperLink', toast: 'Toasters',
+    'action-chip': 'Chips', 'filter-chip': 'Chips', 'choice-chip': 'Chips',
+    'icon-button': 'Button', 'toggle-switch': 'Toggles', 'segmented-control': 'SegmentControl',
+    'text-area': 'InputFields', textarea: 'InputFields',
   }
 
   // Detection selectors. Defaults cover both styled-components-based Life usage
@@ -556,13 +560,17 @@
   // with zero configuration — whether it was built before or after the checker was
   // added. Runs on mount and on every open, so it tracks SPA route changes too.
   // Resolve a DOM element to its Life catalogue name via its data-slot (the v1.4+
-  // library tags every element). Keys on the first slot segment, so sub-parts like
-  // "card-header" resolve to "Card". Returns null when it isn't a named Life component.
+  // library tags every element). Tries the full slot ("action-chip" -> "Chips"), then
+  // its first segment, so sub-parts like "card-header" resolve to "Card". Returns null
+  // when it isn't a named Life component.
+  function slotName(key) {
+    return SLOT_ALIASES[key] || CAT_LOOKUP[norm(key)] || CAT_LOOKUP[norm(key + 's')] || null
+  }
   function componentName(el) {
     if (!el || !el.getAttribute) return null
-    var base = (el.getAttribute('data-slot') || '').split('-')[0]
-    if (!base) return null
-    return SLOT_ALIASES[base] || CAT_LOOKUP[norm(base)] || CAT_LOOKUP[norm(base + 's')] || null
+    var slot = el.getAttribute('data-slot') || ''
+    if (!slot) return null
+    return slotName(slot) || slotName(slot.split('-')[0])
   }
   function detectUsedComponents() {
     var found = {}
